@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+  <meta charset="UTF-8">
+  <title>Poměr živin – interaktivní verze</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    * {
+      box-sizing: border-box;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    body {
+      margin: 0;
+      padding: 16px;
+      background: #f5f5f5;
+      color: #222;
+    }
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+      background: white;
+      padding: 16px;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    }
+    h1 {
+      font-size: 20px;
+      margin-top: 0;
+      margin-bottom: 8px;
+      text-align: center;
+    }
+    h2 {
+      font-size: 16px;
+      margin-top: 24px;
+      margin-bottom: 8px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 8px;
+    }
+    th, td {
+      border: 1px solid #ddd;
+      padding: 6px 8px;
+      text-align: center;
+      font-size: 14px;
+    }
+    th {
+      background: #f0f0f0;
+      font-weight: 600;
+    }
+    td.label-cell {
+      text-align: left;
+      border: none;
+      background: transparent;
+    }
+    input[type="number"] {
+      width: 100%;
+      padding: 4px 6px;
+      font-size: 14px;
+      text-align: right;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+    }
+    input[type="number"]:focus {
+      outline: none;
+      border-color: #0078d7;
+      box-shadow: 0 0 0 2px rgba(0,120,215,0.2);
+    }
+    .total-cell {
+      font-weight: 600;
+    }
+    .total-badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-size: 13px;
+    }
+    .total-ok {
+      background: #e3f8e6;
+      color: #1d7c3c;
+    }
+    .total-low {
+      background: #fff4d6;
+      color: #976400;
+    }
+    .total-high {
+      background: #ffe4e4;
+      color: #b00020;
+    }
+    .note {
+      font-size: 12px;
+      color: #666;
+      margin-bottom: 4px;
+    }
+    .error-text {
+      font-size: 12px;
+      color: #b00020;
+      min-height: 16px;
+    }
+    .footer-note {
+      margin-top: 16px;
+      font-size: 11px;
+      color: #888;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Uhodněte jaký je optimální poměr živin v&nbsp;potravě.</h1>
+
+    <div>
+      <div class="note">Zadejte odhadované podíly v&nbsp;%. Součet nebude nikdy povolen nad 100&nbsp;%.</div>
+      <table>
+        <tr>
+          <td class="label-cell"></td>
+          <th>Cukry</th>
+          <th>Tuky</th>
+          <th>Bílkoviny</th>
+          <th>Dohromady</th>
+        </tr>
+        <tr>
+          <td class="label-cell"></td>
+          <td>
+            <input type="number" min="0" max="100" step="1"
+                   value="0" data-group="1" class="percent-input"> %
+          </td>
+          <td>
+            <input type="number" min="0" max="100" step="1"
+                   value="0" data-group="1" class="percent-input"> %
+          </td>
+          <td>
+            <input type="number" min="0" max="100" step="1"
+                   value="0" data-group="1" class="percent-input"> %
+          </td>
+          <td class="total-cell">
+            <span id="total-1" class="total-badge total-low">0&nbsp;%</span>
+          </td>
+        </tr>
+      </table>
+      <div id="msg-1" class="error-text"></div>
+    </div>
+
+    <h2>Jak si myslíš, že vypadá poměr živin v Tvé stravě?</h2>
+
+    <div>
+      <div class="note">Opět zadej hodnoty v&nbsp;%. Součet se hlídá na maximum 100&nbsp;%.</div>
+      <table>
+        <tr>
+          <td class="label-cell"></td>
+          <th>Cukry</th>
+          <th>Tuky</th>
+          <th>Bílkoviny</th>
+          <th>Dohromady</th>
+        </tr>
+        <tr>
+          <td class="label-cell"></td>
+          <td>
+            <input type="number" min="0" max="100" step="1"
+                   value="0" data-group="2" class="percent-input"> %
+          </td>
+          <td>
+            <input type="number" min="0" max="100" step="1"
+                   value="0" data-group="2" class="percent-input"> %
+          </td>
+          <td>
+            <input type="number" min="0" max="100" step="1"
+                   value="0" data-group="2" class="percent-input"> %
+          </td>
+          <td class="total-cell">
+            <span id="total-2" class="total-badge total-low">0&nbsp;%</span>
+          </td>
+        </tr>
+      </table>
+      <div id="msg-2" class="error-text"></div>
+    </div>
+
+    <div class="footer-note">
+      Hodnoty se nikam neukládají, výpočty probíhají jen v tomto prohlížeči.
+    </div>
+  </div>
+
+  <script>
+    function updateGroup(groupId) {
+      const inputs = Array.from(document.querySelectorAll('.percent-input[data-group="' + groupId + '"]'));
+      let values = inputs.map(i => {
+        const v = parseFloat(i.value.replace(',', '.'));
+        return isNaN(v) ? 0 : v;
+      });
+
+      let sum = values.reduce((a, b) => a + b, 0);
+
+      // Pokud součet přesáhne 100 %, upravíme posledně editované pole
+      if (sum > 100) {
+        const active = document.activeElement;
+        const idx = inputs.indexOf(active);
+        if (idx !== -1) {
+          const othersSum = sum - values[idx];
+          let allowed = 100 - othersSum;
+          if (allowed < 0) allowed = 0;
+          values[idx] = allowed;
+          active.value = allowed.toFixed(0);
+          sum = othersSum + allowed;
+        }
+      }
+
+      const totalSpan = document.getElementById('total-' + groupId);
+      const msg = document.getElementById('msg-' + groupId);
+
+      totalSpan.textContent = sum.toFixed(0) + ' %';
+      totalSpan.classList.remove('total-ok', 'total-low', 'total-high');
+
+      if (sum === 100) {
+        totalSpan.classList.add('total-ok');
+        msg.textContent = 'Součet je přesně 100 %.';
+      } else if (sum < 100) {
+        totalSpan.classList.add('total-low');
+        msg.textContent = 'Součet je méně než 100 %. Můžeš ještě přidat ' + (100 - sum).toFixed(0) + ' %.';
+      } else {
+        totalSpan.classList.add('total-high');
+        msg.textContent = 'Součet přesahuje 100 % (to by se stát nemělo).';
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+      const inputs = document.querySelectorAll('.percent-input');
+      inputs.forEach(input => {
+        ['input', 'change'].forEach(ev => {
+          input.addEventListener(ev, function () {
+            updateGroup(this.dataset.group);
+          });
+        });
+      });
+
+      // Inicializace
+      updateGroup('1');
+      updateGroup('2');
+    });
+  </script>
+</body>
+</html>
